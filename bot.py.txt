@@ -1,15 +1,18 @@
 import logging
+import os
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
+from dotenv import load_dotenv
 
-# Твой токен бота
-API_TOKEN = '7152523467:AAF7vaWz8C04K0cweL7BuXd6IGNBitkKeQk'
+# Загрузка переменных окружения
+load_dotenv()
 
-# Telegram ID администратора (твоя учётка, куда приходят заявки)
-ADMIN_ID = 6977839833  # ← Замени на свой Telegram ID
+# Токен и ID из переменных окружения
+API_TOKEN = os.getenv('API_TOKEN')
+ADMIN_ID = int(os.getenv('ADMIN_ID'))
 
 # Логирование
 logging.basicConfig(level=logging.INFO)
@@ -38,6 +41,12 @@ async def send_welcome(message: types.Message):
 # Нажал кнопку
 @dp.callback_query_handler(lambda c: c.data == 'apply')
 async def process_callback_apply(callback_query: types.CallbackQuery):
+    # Проверка, не в процессе ли уже пользователь
+    user_id = callback_query.from_user.id
+    if await dp.current_state(user=user_id).get_state() is not None:
+        await callback_query.answer("❌ Ты уже в процессе подачи заявки!")
+        return
+
     await Form.name.set()
     await bot.send_message(callback_query.from_user.id, "📝 Как тебя зовут?")
 
@@ -60,3 +69,8 @@ async def process_contact(message: types.Message, state: FSMContext):
 
     await message.answer("✅ Заявка отправлена! Менеджер скоро с тобой свяжется.")
     await state.finish()
+
+# Запуск бота
+if __name__ == "__main__":
+    from aiogram import executor
+    executor.start_polling(dp, skip_updates=True)
