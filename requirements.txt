@@ -1,4 +1,4 @@
-aiofiles
+aiofiles~=23.2.1
 aiogram==3.2.0
 aiohappyeyeballs==2.6.1
 aiohttp~=3.9.0
